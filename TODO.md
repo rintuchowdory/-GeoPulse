@@ -31,3 +31,8 @@
   - [x] Die aktive Alarmregel ist in der Zonenliste sichtbar und lässt sich im Bearbeitungsdialog ändern.
   - [x] Eigentümer können Browser-Benachrichtigungen aktivieren; neue Ereignisse aus OwnTracks- und Browser-Pings erscheinen im Aktivitätsfeed, als In-App-Hinweis und bei erteilter Browser-Berechtigung als Betriebssystem-Benachrichtigung.
   - [x] Ereignisse werden dedupliziert und binnen des 15-Sekunden-Pollintervalls erkannt; Browseralarme funktionieren nur, solange GeoPulse geöffnet ist.
+- [x] **Farbiger digitaler Dashboard-Look**
+  - [x] „make it colourful dasboard and digital!“ – die Oberfläche soll sichtbar farbiger und digitaler wirken.
+  - [x] Die Live-Karte bleibt die Hauptfläche; die Bedienelemente bleiben klar lesbar und für Mobilgeräte angepasst.
+  - [x] Die digitale Farbgebung unterstützt Status, Aktionen und Datenebenen, ohne die Geodaten zu überdecken.
+  - [x] Reduzierte Bewegung wird über `prefers-reduced-motion` respektiert.

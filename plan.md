@@ -26,20 +26,18 @@ GeoPulse wird als mobile-first React-/Tailwind-Web-App im bestehenden Manus-Proj
 
 ## Design
 
-Drei alternative Stilrichtungen (jeweils geringe Ausgangswahrscheinlichkeit): **Instrument-Panel, 0,06**; **field-notes/cartographic, 0,04**; **glassmorphic satellite console, 0,03**. Gewählt ist **Instrument-Panel**: eine präzise, nächtliche Lagezentrale mit klaren Kartenebenen und minimalem visuellem Rauschen.
-
-- **Designbewegung:** zeitgenössische Flugverkehrs-/Geodaten-Konsole mit zurückhaltender Editorial-Typografie.
-- **Kernprinzipien:** Karte bleibt visuell dominant; Status ist ohne Öffnen eines Geräts erkennbar; Informationsdichte wird über progressive Panels organisiert; mobile Controls bleiben Daumen-erreichbar.
-- **Farbphilosophie:** fast-schwarzes Navy und Graphit geben Satelliten- und Straßendaten Raum; kühles Mint signalisiert Live/GeoPulse, warme Bernstein-/Korallentöne reservieren sich für Hinweise und Warnungen. Geräte nutzen unterscheidbare Akzentfarben.
-- **Layout-Paradigma:** vollflächige Karte als Arbeitsfläche, schwebende schmale Kopfzeile und linke Desktop-Sidecar-Leiste; auf Mobilgeräten werden Panels zu ausziehbaren, unteren Kartenblättern.
-- **Signature-Elemente:** kompakter Pulsring auf frischen Gerätepositionen; feine Koordinaten-/Rasterdetails in Panels; gerichtete, altersverblassende Ping-Spuren.
-- **Interaktion:** Map-Pan/Zoom bleibt direkt; Gerät anklicken fokussiert und öffnet Details; Layer sind explizit schaltbar; Bearbeitung und Freigabe erfolgen in klar abgegrenzten Dialogen. Keine Kontrolle wird in der Nur-Lese-Freigabe angezeigt.
-- **Animation:** langsamer, gedämpfter Puls nur für <60-Sekunden-Geräte; Trail-Opacity nimmt entlang der Zeit ab; kurze (140–220 ms) Panel- und Hover-Übergänge; keine dauernd bewegte Dekoration.
-- **Typografie:** Inter für Interface und Tabellen, `IBM Plex Mono` für Codes, Koordinaten, Messwerte und Zeitstempel; kompakte Tabular Numbers und klare 11/13/15/20-px-Hierarchie.
-- **Markenkern:** „Standorte in Echtzeit – auf einen Blick.“ Persönlichkeit: präzise, ruhig, wachsam.
-- **Markensprache:** nüchtern und handlungsorientiert. Beispiele: „3 Geräte im Blick“; „Zuletzt vor 12 s · Genauigkeit ±8 m“.
-- **Wortmarke/Logo:** GeoPulse mit eigenständigem Radar-Punkt: mintfarbener Kern, zwei unvollständige konzentrische Ringe, ohne Standard-Pin-Silhouette.
-- **Signaturfarbe:** elektrisches Mint `#48E0C1` für GeoPulse Live-Status und primäre Aktionen.
+- **Designbewegung:** farbige Digital-Command-Konsole mit klaren Geodaten- und HUD-Anklängen.
+- **Kernprinzipien:** Karte bleibt die dominante Arbeitsfläche; kräftige Farben zeigen Status und Funktionen statt Dekoration; Informationsdichte bleibt in lesbaren, schwebenden Panels; mobil erreichbare Controls behalten ihre Hierarchie.
+- **Farbphilosophie:** tiefes Nachtblau hält die Karte ruhig; elektrisches Cyan/Mint markiert Live-Daten, Violett codiert Ebenen und Zonen, Pink/Koralle signalisiert Freigaben und Ereignisse, Lime und Amber setzen gezielte Impulse. Markerfarben bleiben pro Gerät unterscheidbar.
+- **Layout-Paradigma:** Vollbildkarte unter einer transparenten Kommandoleiste; links ein kompaktes Fleet-Panel, rechts schaltbare Layer/Share-Panels und ein Geräte-Detail; mobil werden die Flächen zu gestapelten Bottom-Sheets.
+- **Signature-Elemente:** feines Koordinatenraster über der Karte; farbcodierte Pulsringe und weich leuchtende Marker; dünne, horizontale Signal- und Statuslinien in Panels.
+- **Interaktion:** Pan/Zoom bleibt direkt; Marker und Buttons erhalten klare Farb- und Fokuszustände; Hover/Selection hebt die zugehörige Gerätefarbe hervor; öffentliche Freigaben behalten eine sichtbare Read-only-Grenze.
+- **Animation:** kurzer Panel-Einflug, weicher Live-Puls und dezent auslaufende Ping-Spuren; keine ununterbrochenen Scan-Animationen, Beachtung von `prefers-reduced-motion`.
+- **Typografie:** Space Grotesk für UI und Überschriften, DM Mono für Tracking-Code, Koordinaten, Messwerte und Timestamps; hohe Kontraste und kompakte Tabular Numbers.
+- **Markenkern:** „Standorte in Echtzeit – sichtbar in Farbe.“ Persönlichkeit: digital, wachsam, klar.
+- **Markensprache:** knapp, technisch und unmittelbar. Beispiele: „LIVE · 4 Geräte“; „Zuletzt vor 12 s · Genauigkeit ±8 m“.
+- **Wortmarke/Logo:** ein helles GeoPulse-Glyph in einem cyan-mintfarbenen Radar-Kachelrahmen mit zwei zurückhaltenden Ringdetails.
+- **Signaturfarbe:** leuchtendes Cyan `#3BE7FF`; Mint, Violett, Pink, Lime und Amber ergänzen es nach Datenrolle.
 
 ## Laufzeit und Serving
 
