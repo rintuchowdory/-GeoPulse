@@ -26,3 +26,8 @@
 - [x] **Geofences**
   - [x] Geofence fields: name, lat, lng, radius_m, device_id (optional), notify_on (enter|exit|both).
   - [x] Eigentümer können Geofences erstellen, ändern und löschen; passende Eintritts-/Austrittsübergänge werden für die konfigurierten Geräte und die Benachrichtigungseinstellung erkannt.
+- [x] **Geofence-Alarmregeln und Benachrichtigungen**
+  - [x] Neue Geofences starten mit der Regel „Alert when entering“; pro Zone kann auf Betreten, Verlassen oder beides alarmiert werden.
+  - [x] Die aktive Alarmregel ist in der Zonenliste sichtbar und lässt sich im Bearbeitungsdialog ändern.
+  - [x] Eigentümer können Browser-Benachrichtigungen aktivieren; neue Ereignisse aus OwnTracks- und Browser-Pings erscheinen im Aktivitätsfeed, als In-App-Hinweis und bei erteilter Browser-Berechtigung als Betriebssystem-Benachrichtigung.
+  - [x] Ereignisse werden dedupliziert und binnen des 15-Sekunden-Pollintervalls erkannt; Browseralarme funktionieren nur, solange GeoPulse geöffnet ist.

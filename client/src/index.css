@@ -1,6 +1,109 @@
+.share-expiry-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 11px;
+  padding: 9px 10px;
+  border: 1px solid #ffffff0c;
+  border-radius: 6px;
+  background: #ffffff04;
+}
+.share-expiry-row label {
+  color: #86969d;
+  font: 500 8px var(--font-mono);
+  letter-spacing: 0.1em;
+}
+.share-expiry-row select {
+  max-width: 145px;
+  height: 28px;
+  padding: 0 7px;
+  border: 1px solid #2d4145;
+  border-radius: 5px;
+  background: #10191e;
+  color: #bfe9dc;
+  font-size: 10px;
+}
+.revoke-share {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 7px;
+  border: 1px solid #743e38;
+  border-radius: 6px;
+  background: #71362818;
+  color: #e6a398;
+  font-size: 9px;
+}
+.revoke-share:hover {
+  border-color: #ab594d;
+  background: #74362838;
+}
 
-.share-expiry-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 11px; padding:9px 10px; border:1px solid #ffffff0c; border-radius:6px; background:#ffffff04; }
-.share-expiry-row label { color:#86969d; font:500 8px var(--font-mono); letter-spacing:.1em; }
-.share-expiry-row select { max-width:145px; height:28px; padding:0 7px; border:1px solid #2d4145; border-radius:5px; background:#10191e; color:#bfe9dc; font-size:10px; }
-.revoke-share { width:100%; display:flex; align-items:center; justify-content:center; gap:6px; margin-top:8px; padding:7px; border:1px solid #743e38; border-radius:6px; background:#71362818; color:#e6a398; font-size:9px; }
-.revoke-share:hover { border-color:#ab594d; background:#74362838; }
+.fence-alert-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 9px;
+  padding: 9px 10px;
+  border: 1px solid #1d413f;
+  border-radius: 7px;
+  background: #11201f88;
+}
+.fence-alert-copy {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #60d9c5;
+  min-width: 0;
+}
+.fence-alert-copy > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.fence-alert-copy b {
+  color: #cde8df;
+  font: 600 10px var(--font-mono);
+  letter-spacing: 0.04em;
+}
+.fence-alert-copy small {
+  color: #85969a;
+  font-size: 9px;
+  line-height: 1.35;
+}
+.alarm-enable {
+  flex: none;
+  padding: 6px 8px;
+  border: 1px solid #246052;
+  border-radius: 5px;
+  background: #102521;
+  color: #7ee2cb;
+  font: 700 8px var(--font-mono);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+.alarm-enable.enabled {
+  border-color: #278f76;
+  background: #163a32;
+  color: #a2f5df;
+}
+.alarm-enable:disabled:not(.enabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.fence-rule-pill {
+  display: inline-flex;
+  margin-top: 4px;
+  padding: 3px 5px;
+  border: 1px solid #22463e;
+  border-radius: 4px;
+  background: #122923;
+  color: #77cdb5;
+  font: 600 7px var(--font-mono);
+  letter-spacing: 0.06em;
+}

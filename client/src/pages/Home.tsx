@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   AlertTriangle,
+  Bell,
   ChevronDown,
   CircleDot,
   Copy,
@@ -60,6 +61,15 @@ type Fence = {
   deviceId: number | null;
   notifyOn: "enter" | "exit" | "both";
   lastInside: boolean | null;
+};
+type FenceEventRow = {
+  event: {
+    id: number;
+    eventType: "enter" | "exit";
+    recordedAt: string;
+  };
+  geofenceName: string;
+  deviceName: string;
 };
 type LayerInfo = {
   on: boolean;
@@ -202,7 +212,7 @@ export default function Home() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [pings, setPings] = useState<Record<number, MapPing[]>>({});
   const [fences, setFences] = useState<Fence[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<FenceEventRow[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [bounds, setBounds] = useState<ViewBounds | null>(null);
   const [activePane, setActivePane] = useState<"devices" | "fences">("devices");
@@ -213,7 +223,7 @@ export default function Home() {
   const [formName, setFormName] = useState("");
   const [formColor, setFormColor] = useState("#48e0c1");
   const [formRadius, setFormRadius] = useState("250");
-  const [formNotify, setFormNotify] = useState("both");
+  const [formNotify, setFormNotify] = useState("enter");
   const [formFenceDevice, setFormFenceDevice] = useState("all");
   const [editingFenceId, setEditingFenceId] = useState<number | null>(null);
   const [editingFenceLocation, setEditingFenceLocation] = useState<{
@@ -239,10 +249,18 @@ export default function Home() {
     lat: number;
     lng: number;
   } | null>(null);
+  const [notificationPermission, setNotificationPermission] = useState<
+    NotificationPermission | "unsupported"
+  >(() =>
+    typeof window !== "undefined" && "Notification" in window
+      ? Notification.permission
+      : "unsupported"
+  );
   const [refreshClock, setRefreshClock] = useState(Date.now());
   const [busy, setBusy] = useState(false);
   const watchRef = useRef<number | null>(null);
   const lastPostRef = useRef(0);
+  const lastFenceEventIdRef = useRef<number | null>(null);
   const flightCache = useRef(new Map<string, { at: number; rows: Flight[] }>());
   const selected = devices.find(d => d.id === selectedId) ?? null;
   const currentPings = selected ? (pings[selected.id] ?? []) : [];
@@ -253,12 +271,66 @@ export default function Home() {
     setSelectedId(old => old ?? result.devices[0]?.id ?? null);
   }, []);
   const refreshFences = useCallback(async () => {
-    const result = await api<{ geofences: Fence[]; events: any[] }>(
+    const result = await api<{ geofences: Fence[]; events: FenceEventRow[] }>(
       "/api/geofences"
     );
     setFences(result.geofences);
     setEvents(result.events);
+    const newestId = result.events.reduce(
+      (newest, row) => Math.max(newest, row.event.id),
+      0
+    );
+    const lastId = lastFenceEventIdRef.current;
+    if (lastId === null) {
+      lastFenceEventIdRef.current = newestId;
+      return;
+    }
+    const freshEvents = result.events
+      .filter(row => row.event.id > lastId)
+      .sort((a, b) => a.event.id - b.event.id);
+    lastFenceEventIdRef.current = Math.max(lastId, newestId);
+    for (const row of freshEvents) {
+      const entering = row.event.eventType === "enter";
+      const title = `${row.deviceName} ${entering ? "entered" : "exited"} ${row.geofenceName}`;
+      toast(title, { duration: 8000 });
+      if (
+        typeof Notification !== "undefined" &&
+        Notification.permission === "granted"
+      ) {
+        try {
+          const notification = new Notification(
+            entering ? "GeoPulse · Zone entry" : "GeoPulse · Zone exit",
+            {
+              body: `${row.deviceName} ${entering ? "entered" : "exited"} “${row.geofenceName}”.`,
+              tag: `geofence-${row.event.id}`,
+              icon: "/geopulse-mark.svg",
+            }
+          );
+          notification.onclick = () => {
+            window.focus();
+            notification.close();
+          };
+        } catch {
+          // The event remains visible in the in-app activity list.
+        }
+      }
+    }
   }, []);
+  const enableBrowserAlerts = async () => {
+    if (!("Notification" in window)) {
+      setNotificationPermission("unsupported");
+      toast.error("This browser does not support notifications");
+      return;
+    }
+    const permission = await Notification.requestPermission();
+    setNotificationPermission(permission);
+    if (permission === "granted")
+      toast.success("Browser alerts enabled for new geofence events");
+    else
+      toast.error(
+        "Allow notifications in your browser settings to enable alerts"
+      );
+  };
   useEffect(() => {
     if (!user) return;
     let live = true;
@@ -716,7 +788,7 @@ export default function Home() {
       const publicPath = `/share/${share.token}`;
       setShareToken(share.token);
       setShareLink(absoluteLink(publicPath));
-      setIngestLink(absoluteLink(`/ingest?code=${d.trackingCode}`));
+      setIngestLink(absoluteLink("/ingest"));
       setTrackingDevice(d);
       setShareOpen(true);
       lastPostRef.current = 0;
@@ -757,14 +829,7 @@ export default function Home() {
               }),
             });
             if (result.geofence_events?.length)
-              result.geofence_events.forEach(e =>
-                toast(
-                  e.event === "enter"
-                    ? `Entered ${e.name}`
-                    : `Exited ${e.name}`,
-                  { description: e.device }
-                )
-              );
+              void refreshFences().catch(() => {});
           } catch (e) {
             toast.error(`Location ping failed: ${(e as Error).message}`);
           }
@@ -1079,6 +1144,7 @@ export default function Home() {
                 className="round-add"
                 onClick={() => {
                   setFormName("");
+                  setFormNotify("enter");
                   setEditingFenceId(null);
                   setEditingFenceLocation(null);
                   setDialog({ kind: "fence" });
@@ -1086,6 +1152,30 @@ export default function Home() {
                 title="Add geofence"
               >
                 <Plus size={16} />
+              </button>
+            </div>
+            <div className="fence-alert-controls">
+              <div className="fence-alert-copy">
+                <Bell size={14} />
+                <span>
+                  <b>Zone alerts</b>
+                  <small>
+                    {notificationPermission === "granted"
+                      ? "Enabled · keep GeoPulse open"
+                      : notificationPermission === "denied"
+                        ? "Blocked in browser settings"
+                        : notificationPermission === "unsupported"
+                          ? "Browser notifications unavailable"
+                          : "Enable alerts while GeoPulse is open"}
+                  </small>
+                </span>
+              </div>
+              <button
+                className={`alarm-enable ${notificationPermission === "granted" ? "enabled" : ""}`}
+                onClick={() => void enableBrowserAlerts()}
+                disabled={notificationPermission !== "default"}
+              >
+                {notificationPermission === "granted" ? "ON" : "ENABLE"}
               </button>
             </div>
             <div className="fence-note">
@@ -1108,6 +1198,13 @@ export default function Home() {
                           "device")
                         : "All devices"}
                     </small>
+                    <span className="fence-rule-pill">
+                      {f.notifyOn === "enter"
+                        ? "ALERT · ON ENTRY"
+                        : f.notifyOn === "exit"
+                          ? "ALERT · ON EXIT"
+                          : "ALERT · ENTRY + EXIT"}
+                    </span>
                   </div>
                   <button
                     className="tiny-icon"
@@ -1332,17 +1429,11 @@ export default function Home() {
               </div>
               <label>OWNTRACKS HTTP ENDPOINT</label>
               <div className="copy-field url-field">
-                <span>
-                  {ingestLink ||
-                    absoluteLink(`/ingest?code=${trackingDevice.trackingCode}`)}
-                </span>
+                <span>{ingestLink || absoluteLink("/ingest")}</span>
                 <button
                   onClick={() =>
                     void copy(
-                      ingestLink ||
-                        absoluteLink(
-                          `/ingest?code=${trackingDevice!.trackingCode}`
-                        ),
+                      ingestLink || absoluteLink("/ingest"),
                       "Ingest endpoint copied"
                     )
                   }
@@ -1351,9 +1442,8 @@ export default function Home() {
                 </button>
               </div>
               <div className="share-hint">
-                For OwnTracks HTTP mode, use the endpoint URL and set the
-                tracking code as the HTTP Basic Auth username, or send it in the
-                `code` field.
+                For OwnTracks HTTP mode, use HTTPS and set the tracking code as
+                the HTTP Basic Auth username. Leave the password blank.
               </div>
             </div>
           )}
@@ -1684,14 +1774,14 @@ export default function Home() {
                 </select>
               </div>
             </div>
-            <label>NOTIFY ON</label>
+            <label>ALARM RULE</label>
             <select
               value={formNotify}
               onChange={e => setFormNotify(e.target.value)}
             >
-              <option value="both">Enter and exit</option>
-              <option value="enter">Enter only</option>
-              <option value="exit">Exit only</option>
+              <option value="enter">Alert when entering</option>
+              <option value="both">Alert on entry and exit</option>
+              <option value="exit">Alert when exiting</option>
             </select>
             <div className="modal-note">
               <Crosshair size={14} /> Center:{" "}
