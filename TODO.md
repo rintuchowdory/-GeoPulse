@@ -1,0 +1,28 @@
+# TODO – GeoPulse
+
+- [x] **Live-Karte und Layer**
+  - [x] Live map (default): full-screen dark map.
+  - [x] Each device is a colored marker that pulses when seen in the last 60s, greys out when stale.
+  - [x] Click a device for name, accuracy, speed, battery, last seen, and its last 10 pings as a fading trail.
+  - [x] Left panel lists devices sorted by last seen with distance from map center.
+  - [x] Auto-refresh every 5s.
+  - [x] Layers panel, each fetched client-side on its own interval, with count and last-update time.
+  - [x] ISS (`api.wheretheiss.at/v1/satellites/25544`, 5s); earthquakes M2.5+ last 24h (`earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_day.geojson`, 60s); flights in current viewport (`opensky-network.org/api/states/all` with bbox, 30s, cache and back off).
+- [x] **Standortfreigabe und Geräte**
+  - [x] Share my location: "Start sharing" uses `navigator.geolocation.watchPosition` with `enableHighAccuracy` and posts a ping every 10s while the tab is open.
+  - [x] Shows the tracking code and a copyable link.
+  - [x] Devices: add, rename, delete, generate a ShareLink with expiry.
+  - [x] Device fields: name, owner_email, color, tracking_code (6 chars), last_lat, last_lng, last_accuracy, last_seen, battery, status (active|idle|offline), sharing_enabled.
+  - [x] ShareLink fields: token, device_id, expires_at, revoked.
+  - [x] `/share/:token` is a read-only view of that one device with no controls.
+- [x] **Ingest, Verlauf und Schutzregeln**
+  - [x] LocationPing fields: device_id, lat, lng, accuracy, speed, heading, source (gps|owntracks|network), recorded_at.
+  - [x] Ingest endpoint: backend function `POST /ingest` accepting `{code, lat, lng, acc, speed, battery}` that writes a LocationPing and updates the Device.
+  - [x] It must work with the OwnTracks app's HTTP mode, so a phone can report in the background.
+  - [x] Owner sees all devices, a ShareLink sees exactly one.
+  - [x] Validate lat/lng ranges.
+  - [x] Reject pings older than 5 minutes, and flag (do not plot) a jump over 500 km within 60s.
+  - [x] Keep 7 days of pings per device and delete older ones.
+- [x] **Geofences**
+  - [x] Geofence fields: name, lat, lng, radius_m, device_id (optional), notify_on (enter|exit|both).
+  - [x] Eigentümer können Geofences erstellen, ändern und löschen; passende Eintritts-/Austrittsübergänge werden für die konfigurierten Geräte und die Benachrichtigungseinstellung erkannt.
