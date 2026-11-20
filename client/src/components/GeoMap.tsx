@@ -1,7 +1,13 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
+import { maplibreGL } from "@maplibre/maplibre-gl-leaflet";
+import { setWorkerUrl } from "maplibre-gl";
+import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import "leaflet/dist/leaflet.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 import { weatherCondition, type WeatherNow } from "@/lib/weather";
+
+setWorkerUrl(workerUrl);
 
 export type MapDevice = {
   id: number;
@@ -109,17 +115,11 @@ export default function GeoMap({
       zoomControl: false,
       preferCanvas: true,
       minZoom: 2,
+      maxBounds: [[180, -Infinity], [-180, Infinity]],
+      maxBoundsViscosity: 1,
     }).setView([25, 4], 2);
     mapRef.current = map;
-    L.tileLayer(
-      "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-      {
-        subdomains: "abcd",
-        maxZoom: 20,
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
-      }
-    ).addTo(map);
+    maplibreGL({ style: "https://tiles.openfreemap.org/styles/dark" }).addTo(map);
     L.control.zoom({ position: "bottomright" }).addTo(map);
     Object.values(layerRef.current).forEach(group => group.addTo(map));
     const emitBounds = () => {

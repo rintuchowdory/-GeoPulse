@@ -2,6 +2,7 @@
 
 - [x] **Live-Karte und Layer**
   - [x] Live map (default): full-screen dark map.
+  - [x] Dark basemap uses OpenFreeMap without a provider key and visibly attributes OpenFreeMap, OpenMapTiles, and OpenStreetMap.
   - [x] Each device is a colored marker that pulses when seen in the last 60s, greys out when stale.
   - [x] Click a device for name, accuracy, speed, battery, last seen, and its last 10 pings as a fading trail.
   - [x] Left panel lists devices sorted by last seen with distance from map center.

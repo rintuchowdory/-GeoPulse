@@ -218,10 +218,13 @@ function Modal({
 export default function Home() {
   const auth = useAuth();
   const user = auth.user;
-  const [devices, setDevices] = useState<Device[]>([]);
+  const [deviceState, setDevices] = useState<Device[]>([]);
+  const devices = Array.isArray(deviceState) ? deviceState : [];
   const [pings, setPings] = useState<Record<number, MapPing[]>>({});
-  const [fences, setFences] = useState<Fence[]>([]);
-  const [events, setEvents] = useState<FenceEventRow[]>([]);
+  const [fenceState, setFences] = useState<Fence[]>([]);
+  const fences = Array.isArray(fenceState) ? fenceState : [];
+  const [eventState, setEvents] = useState<FenceEventRow[]>([]);
+  const events = Array.isArray(eventState) ? eventState : [];
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [bounds, setBounds] = useState<ViewBounds | null>(null);
   const [activePane, setActivePane] = useState<"devices" | "fences">("devices");
@@ -284,16 +287,21 @@ export default function Home() {
 
   const refreshDevices = useCallback(async () => {
     const result = await api<{ devices: Device[] }>("/api/devices");
-    setDevices(result.devices);
-    setSelectedId(old => old ?? result.devices[0]?.id ?? null);
+    const rows = Array.isArray(result?.devices) ? result.devices : [];
+    setDevices(rows);
+    setSelectedId(old => old ?? rows[0]?.id ?? null);
   }, []);
   const refreshFences = useCallback(async () => {
     const result = await api<{ geofences: Fence[]; events: FenceEventRow[] }>(
       "/api/geofences"
     );
-    setFences(result.geofences);
-    setEvents(result.events);
-    const newestId = result.events.reduce(
+    const geofenceRows = Array.isArray(result?.geofences)
+      ? result.geofences
+      : [];
+    const eventRows = Array.isArray(result?.events) ? result.events : [];
+    setFences(geofenceRows);
+    setEvents(eventRows);
+    const newestId = eventRows.reduce(
       (newest, row) => Math.max(newest, row.event.id),
       0
     );
@@ -302,7 +310,7 @@ export default function Home() {
       lastFenceEventIdRef.current = newestId;
       return;
     }
-    const freshEvents = result.events
+    const freshEvents = eventRows
       .filter(row => row.event.id > lastId)
       .sort((a, b) => a.event.id - b.event.id);
     lastFenceEventIdRef.current = Math.max(lastId, newestId);
@@ -1408,7 +1416,7 @@ export default function Home() {
             <span className="mono">API · DB</span>
           </div>
           <div className="map-attribution-note">
-            <MapPin size={12} /> CARTO Dark Matter · OpenStreetMap
+            <MapPin size={12} /> OpenFreeMap Dark · OpenMapTiles · OpenStreetMap
           </div>
         </div>
       </aside>

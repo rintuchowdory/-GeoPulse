@@ -2,7 +2,7 @@
 
 ## Ziel und Architektur
 
-GeoPulse wird als mobile-first React-/Tailwind-Web-App im bestehenden Manus-Projekt (React, Express, tRPC, Drizzle, MySQL) umgesetzt. Die Karte nutzt Leaflet mit CARTO Dark Matter ohne API-Key. Geräte-, Ping-, Geofence- und Share-Link-Daten liegen persistent in der Managed-MySQL-Datenbank. Eigentümer-Routen basieren auf der vorhandenen Manus-Session und filtern zwingend nach `owner_email`; öffentliche Share-Routen sind ausschließlich tokengebunden und geben genau ein Gerät lesend frei. Der unabhängige `POST /ingest` akzeptiert das vereinbarte GeoPulse-JSON und OwnTracks-HTTP-Standortmeldungen. Externe ISS-, USGS- und OpenSky-Layer fragt der Browser unabhängig und in getrennten Intervallen ab.
+GeoPulse wird als mobile-first React-/Tailwind-Web-App im bestehenden Manus-Projekt (React, Express, tRPC, Drizzle, MySQL) umgesetzt. Die Karte nutzt Leaflet mit dem dunklen OpenFreeMap-Vektorstil über MapLibre GL Leaflet, ohne API-Schlüssel; die Vite-Build-Ausgabe liefert den MapLibre-Worker mit aus. Geräte-, Ping-, Geofence- und Share-Link-Daten liegen persistent in der Managed-MySQL-Datenbank. Eigentümer-Routen basieren auf der vorhandenen Manus-Session und filtern zwingend nach `owner_email`; öffentliche Share-Routen sind ausschließlich tokengebunden und geben genau ein Gerät lesend frei. Der unabhängige `POST /ingest` akzeptiert das vereinbarte GeoPulse-JSON und OwnTracks-HTTP-Standortmeldungen. Externe ISS-, USGS- und OpenSky-Layer fragt der Browser unabhängig und in getrennten Intervallen ab.
 
 ## Umsetzung und Entscheidungen
 
@@ -12,6 +12,7 @@ GeoPulse wird als mobile-first React-/Tailwind-Web-App im bestehenden Manus-Proj
 - Ein großes, kartenfokussiertes Dashboard mit responsive Seitenleiste und mobilen Bottom-Sheets: sortierte Geräte, Zentrumdistanz, Status, Detailkarte mit zehn letzten gültigen Pings, Layer-Schalter/Status/Zeitstempel, Gerät-/Geofence-/Freigabeverwaltung, Geofence-Ereignisse und Browser-Standortfreigabe mit zehnsekündigem Ping-Takt.
 - ISS alle 5 s, Erdbeben M2.5+ alle 60 s und OpenSky im aktuellen Bounds alle 30 s. OpenSky nutzt viewport-spezifischen Cache, Fehler-Backoff und abortierbare Requests. Leaflet aktualisiert Map-Bounds für den Flug-Layer.
 - Ein zuschaltbarer Open-Meteo-Wetterlayer holt modellbasierte aktuelle Bedingungen für den Kartenmittelpunkt, zeigt Temperatur und Wettersymbol in einem dezent pulsierenden Leaflet-Marker und ergänzt Temperaturgefühl, Niederschlag, Wind sowie Luftfeuchtigkeit im Layerpanel. Der Feed wird alle 5 Minuten erneuert, nach Kartenbewegung entprellt und pro Standortzelle kurzzeitig gecacht; die UI nennt Anbieter und Modellcharakter transparent. Open-Meteo beschreibt die Current-Felder als 15-minütliche Wettermodellwerte ([API-Dokumentation](https://open-meteo.com/en/docs)); die offene API ist für nichtkommerzielle Nutzung vorgesehen und auf 10.000 Aufrufe pro Tag begrenzt ([Tarife und Limits](https://open-meteo.com/en/pricing)). Datenattribution folgt CC BY 4.0 ([Lizenz](https://open-meteo.com/en/licence)).
+- CARTO verlangt seit 25. September 2026 für Rastertiles einen Basemap-Schlüssel; der übermittelte Entwicklerzugang lieferte für den Tile-Endpunkt weiterhin das „API KEY REQUIRED“-Bild. Daher verwendet GeoPulse den öffentlich kostenlosen OpenFreeMap-Dark-Stil ohne Registrierung oder Schlüssel; OpenFreeMap dokumentiert den Dark-Style und die Integration über MapLibre GL Leaflet ([CARTO-FAQ](https://docs.carto.com/faqs/carto-basemaps), [OpenFreeMap](https://openfreemap.org/), [Quick Start](https://openfreemap.org/quick_start/)).
 - Einfache HTTP-Fehlerantworten, mobile Bedienbarkeit, TypeScript-Diagnostik und vorhandene Projekt-Build-Prüfungen.
 
 ## Projektstruktur
@@ -20,7 +21,7 @@ GeoPulse wird als mobile-first React-/Tailwind-Web-App im bestehenden Manus-Proj
 - `server/geopulse.ts`: Persistenz, Berechtigungsfilter, Ingest-Validierung, Retention und Geofence-Übergänge.
 - `server/_core/index.ts`: REST-Routen für Ingest, Eigentümer-API und öffentliche Share-Ansicht.
 - `client/src/pages/Home.tsx`: Kartenansicht, Layer-Abfragezustände, Device-Liste/Detail und responsive Panels.
-- `client/src/components/`: Leaflet-Karte, modale Formulare und wiederverwendete App-Oberfläche.
+- `client/src/components/`: Leaflet-/MapLibre-Karte, modale Formulare und wiederverwendete App-Oberfläche.
 - `client/src/App.tsx`, `client/src/index.css`, `client/index.html`: Routen, Dark Theme und responsive Gestaltung.
 - `public/manus-routes.json`: vollständiges Seitenroutenmanifest.
 - `TODO.md`: konkrete Produktkriterien und Lieferstatus.
