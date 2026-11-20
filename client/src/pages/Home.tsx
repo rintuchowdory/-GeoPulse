@@ -5,8 +5,10 @@ import {
   Bell,
   ChevronDown,
   CircleDot,
+  CloudSun,
   Copy,
   Crosshair,
+  Droplets,
   ExternalLink,
   Layers3,
   LocateFixed,
@@ -22,8 +24,10 @@ import {
   Shield,
   ShieldCheck,
   Smartphone,
+  Thermometer,
   Trash2,
   Wifi,
+  Wind,
   X,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -36,6 +40,11 @@ import GeoMap, {
   type Quake,
   type ViewBounds,
 } from "@/components/GeoMap";
+import {
+  weatherCondition,
+  windDirectionLabel,
+  type WeatherNow,
+} from "@/lib/weather";
 import { absoluteLink, api, jsonBody } from "@/lib/api";
 
 type Device = {
@@ -234,11 +243,13 @@ export default function Home() {
     iss: { ...noLayer },
     quakes: { ...noLayer },
     flights: { ...noLayer },
+    weather: { ...noLayer, on: true },
     fences: { ...noLayer, on: true },
   });
   const [iss, setIss] = useState<{ lat: number; lng: number } | null>(null);
   const [quakes, setQuakes] = useState<Quake[]>([]);
   const [flights, setFlights] = useState<Flight[]>([]);
+  const [weather, setWeather] = useState<WeatherNow | null>(null);
   const [browserSharing, setBrowserSharing] = useState(false);
   const [trackingDevice, setTrackingDevice] = useState<Device | null>(null);
   const [shareLink, setShareLink] = useState("");
@@ -262,8 +273,14 @@ export default function Home() {
   const lastPostRef = useRef(0);
   const lastFenceEventIdRef = useRef<number | null>(null);
   const flightCache = useRef(new Map<string, { at: number; rows: Flight[] }>());
+  const weatherCache = useRef(
+    new Map<string, { at: number; data: WeatherNow }>()
+  );
   const selected = devices.find(d => d.id === selectedId) ?? null;
   const currentPings = selected ? (pings[selected.id] ?? []) : [];
+  const currentWeather = weather
+    ? weatherCondition(weather.weatherCode)
+    : null;
 
   const refreshDevices = useCallback(async () => {
     const result = await api<{ devices: Device[] }>("/api/devices");
@@ -582,7 +599,129 @@ export default function Home() {
     bounds?.west,
   ]);
 
-  const toggleLayer = (key: "iss" | "quakes" | "flights") =>
+  useEffect(() => {
+    if (!layers.weather.on || !bounds) return;
+    let active = true;
+    let debounceTimer: number;
+    let refreshTimer: number | undefined;
+    let controller: AbortController | null = null;
+    const latitude = bounds.centerLat;
+    const longitude = bounds.centerLng;
+    const key = `${Math.round(latitude * 10) / 10},${Math.round(longitude * 10) / 10}`;
+
+    const run = async () => {
+      const cached = weatherCache.current.get(key);
+      if (cached && Date.now() - cached.at < 4 * 60_000) {
+        if (active) {
+          setWeather({ ...cached.data, lat: latitude, lng: longitude });
+          setLayers(old => ({
+            ...old,
+            weather: {
+              ...old.weather,
+              count: 1,
+              updated: cached.at,
+              loading: false,
+              error: "",
+            },
+          }));
+        }
+        return;
+      }
+
+      controller?.abort();
+      controller = new AbortController();
+      setLayers(old => ({
+        ...old,
+        weather: { ...old.weather, loading: true, error: "" },
+      }));
+      try {
+        const params = new URLSearchParams({
+          latitude: latitude.toFixed(3),
+          longitude: longitude.toFixed(3),
+          current:
+            "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_direction_10m",
+          temperature_unit: "celsius",
+          wind_speed_unit: "kmh",
+          precipitation_unit: "mm",
+          timezone: "auto",
+        });
+        const response = await fetch(
+          `https://api.open-meteo.com/v1/forecast?${params.toString()}`,
+          { signal: controller.signal }
+        );
+        if (!response.ok) throw new Error(`Open-Meteo ${response.status}`);
+        const payload = await response.json();
+        const current = payload.current;
+        const values = [
+          current?.temperature_2m,
+          current?.apparent_temperature,
+          current?.relative_humidity_2m,
+          current?.precipitation,
+          current?.weather_code,
+          current?.wind_speed_10m,
+          current?.wind_direction_10m,
+        ];
+        if (
+          !current ||
+          values.some(value => typeof value !== "number" || !Number.isFinite(value))
+        )
+          throw new Error("Invalid weather response");
+
+        const fetchedAt = Date.now();
+        const data: WeatherNow = {
+          lat: latitude,
+          lng: longitude,
+          temperature: current.temperature_2m,
+          apparentTemperature: current.apparent_temperature,
+          relativeHumidity: current.relative_humidity_2m,
+          precipitation: current.precipitation,
+          weatherCode: current.weather_code,
+          windSpeed: current.wind_speed_10m,
+          windDirection: current.wind_direction_10m,
+          validAt: current.time,
+          timezone: typeof payload.timezone === "string" ? payload.timezone : "UTC",
+          fetchedAt,
+        };
+        weatherCache.current.set(key, { at: fetchedAt, data });
+        if (active) {
+          setWeather(data);
+          setLayers(old => ({
+            ...old,
+            weather: {
+              ...old.weather,
+              count: 1,
+              updated: fetchedAt,
+              loading: false,
+              error: "",
+            },
+          }));
+        }
+      } catch (error) {
+        if (active && (error as Error).name !== "AbortError")
+          setLayers(old => ({
+            ...old,
+            weather: {
+              ...old.weather,
+              loading: false,
+              error: "Weather feed unavailable",
+            },
+          }));
+      }
+    };
+
+    debounceTimer = window.setTimeout(() => {
+      void run();
+      refreshTimer = window.setInterval(() => void run(), 5 * 60_000);
+    }, 650);
+    return () => {
+      active = false;
+      controller?.abort();
+      window.clearTimeout(debounceTimer);
+      if (refreshTimer !== undefined) window.clearInterval(refreshTimer);
+    };
+  }, [layers.weather.on, bounds?.centerLat, bounds?.centerLng]);
+
+  const toggleLayer = (key: "iss" | "quakes" | "flights" | "weather") =>
     setLayers(old => ({ ...old, [key]: { ...old[key], on: !old[key].on } }));
   const selectDevice = (id: number) => {
     setSelectedId(id);
@@ -875,10 +1014,12 @@ export default function Home() {
         iss={iss}
         quakes={quakes}
         flights={flights}
+        weather={weather}
         layers={{
           iss: layers.iss.on,
           quakes: layers.quakes.on,
           flights: layers.flights.on,
+          weather: layers.weather.on,
           fences: layers.fences.on,
         }}
         onDevice={selectDevice}
@@ -919,9 +1060,12 @@ export default function Home() {
             <span>Layers</span>
             <span className="action-count">
               {
-                [layers.iss.on, layers.quakes.on, layers.flights.on].filter(
-                  Boolean
-                ).length
+                [
+                  layers.iss.on,
+                  layers.quakes.on,
+                  layers.flights.on,
+                  layers.weather.on,
+                ].filter(Boolean).length
               }
             </span>
           </button>
@@ -1305,11 +1449,18 @@ export default function Home() {
               detail: "Current map bounds · OpenSky",
               cadence: "30s",
             },
+            {
+              key: "weather" as const,
+              icon: CloudSun,
+              label: "Weather at map center",
+              detail: "Current model · Open-Meteo",
+              cadence: "5m",
+            },
           ].map(({ key, icon: Icon, label, detail, cadence }) => {
             const info = layers[key];
             return (
               <div
-                className={`layer-row ${info.on ? "enabled" : ""}`}
+                className={`layer-row ${info.on ? "enabled" : ""} ${key === "weather" ? "weather-row" : ""}`}
                 key={key}
               >
                 <div className="layer-icon">
@@ -1330,12 +1481,80 @@ export default function Home() {
                   className={`toggle ${info.on ? "on" : ""}`}
                   onClick={() => toggleLayer(key)}
                   aria-label={`Toggle ${label}`}
+                  aria-pressed={info.on}
                 >
                   <span />
                 </button>
               </div>
             );
           })}
+          {layers.weather.on && (
+            <div className="weather-snapshot" role="status" aria-live="polite">
+              <div className="weather-snapshot-head">
+                <span>
+                  <CloudSun size={12} /> Center conditions
+                </span>
+                <small>15-MIN MODEL</small>
+              </div>
+              {weather && currentWeather ? (
+                <>
+                  <div
+                    className={`weather-snapshot-glyph weather-${currentWeather.kind}`}
+                    aria-hidden="true"
+                  >
+                    {currentWeather.glyph}
+                  </div>
+                  <div className="weather-snapshot-reading">
+                    <strong>{Math.round(weather.temperature)}°</strong>
+                    <span>{currentWeather.label}</span>
+                  </div>
+                  <div className="weather-snapshot-metrics">
+                    <span>
+                      <Thermometer size={12} /> Feels like
+                      <b>{Math.round(weather.apparentTemperature)}°</b>
+                    </span>
+                    <span>
+                      <Droplets size={12} /> Precipitation
+                      <b>{weather.precipitation.toFixed(1)} mm</b>
+                    </span>
+                    <span>
+                      <Wind size={12} /> Wind
+                      <b>
+                        {Math.round(weather.windSpeed)} km/h {windDirectionLabel(weather.windDirection)}
+                      </b>
+                    </span>
+                    <span>
+                      <CloudSun size={12} /> Humidity
+                      <b>{Math.round(weather.relativeHumidity)}%</b>
+                    </span>
+                  </div>
+                  <div className="weather-snapshot-foot">
+                    <a
+                      className="weather-source"
+                      href="https://open-meteo.com/en/licence"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Open-Meteo · CC BY 4.0
+                    </a>
+                    <span>
+                      Model {weather.validAt.slice(11, 16)} {weather.timezone}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="weather-snapshot-wait">
+                  <span className="spinner" />
+                  <span>
+                    {layers.weather.error ||
+                      (layers.weather.loading
+                        ? "Syncing map-center weather…"
+                        : "Waiting for map location")}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
           <div className="layer-footnote">
             <Wifi size={13} /> Public endpoints · no API key
           </div>

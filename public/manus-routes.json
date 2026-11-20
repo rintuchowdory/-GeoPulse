@@ -1,0 +1,1 @@
+{"routes":[{"path":"/","title":"GeoPulse Live Map"},{"path":"/share/:token","title":"GeoPulse Share View"}]}

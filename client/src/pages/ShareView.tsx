@@ -69,7 +69,8 @@ export default function ShareView({ token }: { token: string }) {
         iss={null}
         quakes={[]}
         flights={[]}
-        layers={{ iss: false, quakes: false, flights: false, fences: false }}
+        weather={null}
+        layers={{ iss: false, quakes: false, flights: false, weather: false, fences: false }}
         onDevice={() => {}}
         onBounds={setBounds}
       />

@@ -36,3 +36,11 @@
   - [x] Die Live-Karte bleibt die Hauptfläche; die Bedienelemente bleiben klar lesbar und für Mobilgeräte angepasst.
   - [x] Die digitale Farbgebung unterstützt Status, Aktionen und Datenebenen, ohne die Geodaten zu überdecken.
   - [x] Reduzierte Bewegung wird über `prefers-reduced-motion` respektiert.
+- [x] **Aktuelle Wetterdaten als animierter Kartenlayer**
+  - [x] „Füge weitere animierte Layer oder Wetterdaten in Echtzeit zur Karte hinzu.“
+  - [x] Ein zuschaltbarer Wetterlayer zeigt die modellbasierten aktuellen Bedingungen am Mittelpunkt der Karte; beim Verschieben der Karte wird der Standort entprellt neu abgefragt.
+  - [x] Ein dezent pulsierender Wettermarker zeigt Temperatur und Wettersymbol; das Layerpanel ergänzt Zustand, Temperaturgefühl, Niederschlag, Wind und Luftfeuchtigkeit.
+  - [x] Wetterdaten werden alle 5 Minuten aktualisiert, wiederverwendete Standortzellen werden kurzzeitig gecacht, und Fehler werden im Layerstatus kenntlich gemacht.
+  - [x] Die UI kennzeichnet den Anbieter Open-Meteo und die 15-minütliche Modellbasis der „aktuellen“ Bedingungen.
+  - [x] Der Layer ist standardmäßig in der Eigentümerkarte aktiv, lässt sich unabhängig schalten und bleibt in der öffentlichen Read-only-Freigabe deaktiviert.
+  - [x] Die Wetterpuls-Animation respektiert `prefers-reduced-motion`; die Quelle ist mit der Open-Meteo-Lizenz verknüpft.

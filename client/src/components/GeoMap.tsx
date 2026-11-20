@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { weatherCondition, type WeatherNow } from "@/lib/weather";
 
 export type MapDevice = {
   id: number;
@@ -51,7 +52,14 @@ type Props = {
   iss: { lat: number; lng: number; name?: string } | null;
   quakes: Quake[];
   flights: Flight[];
-  layers: { iss: boolean; quakes: boolean; flights: boolean; fences: boolean };
+  weather: WeatherNow | null;
+  layers: {
+    iss: boolean;
+    quakes: boolean;
+    flights: boolean;
+    weather: boolean;
+    fences: boolean;
+  };
   onDevice: (id: number) => void;
   onBounds: (bounds: ViewBounds) => void;
 };
@@ -74,6 +82,7 @@ export default function GeoMap({
   iss,
   quakes,
   flights,
+  weather,
   layers,
   onDevice,
   onBounds,
@@ -87,6 +96,7 @@ export default function GeoMap({
     iss: L.layerGroup(),
     quakes: L.layerGroup(),
     flights: L.layerGroup(),
+    weather: L.layerGroup(),
   });
   const boundsCallback = useRef(onBounds);
   boundsCallback.current = onBounds;
@@ -241,6 +251,29 @@ export default function GeoMap({
         .addTo(group);
     }
   }, [flights, layers.flights]);
+
+  useEffect(() => {
+    const group = layerRef.current.weather;
+    group.clearLayers();
+    if (!layers.weather || !weather) return;
+    const condition = weatherCondition(weather.weatherCode);
+    const temperature = Math.round(weather.temperature);
+    const icon = L.divIcon({
+      className: "weather-icon-wrap",
+      html: `<div class="weather-map-marker weather-${condition.kind}"><span class="weather-map-glyph">${condition.glyph}</span><span class="weather-map-temp">${temperature}°</span></div>`,
+      iconSize: [72, 44],
+      iconAnchor: [36, 22],
+    });
+    L.marker([weather.lat, weather.lng], {
+      icon,
+      zIndexOffset: 700,
+      title: `Weather · ${condition.label} · ${temperature}°C`,
+    })
+      .bindTooltip(
+        `${escaped(condition.label)} · ${temperature}°C · ${Math.round(weather.windSpeed)} km/h wind`
+      )
+      .addTo(group);
+  }, [weather, layers.weather]);
 
   useEffect(() => {
     if (!selectedId) return;
